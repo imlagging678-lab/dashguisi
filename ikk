@@ -1,102 +1,102 @@
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local playerGui = lp:WaitForChild("PlayerGui")
+
+-- [ AYARLAR ]
+local DASH_KEY = Enum.KeyCode.Q
+
+-- [ 🛡️ MOBİL ARAYÜZ KORUMASI ]
+-- Bu kısım, dash atsan bile butonların gitmesini engeller
 task.spawn(function()
-    local source = [[
-        local UserInputService = game:GetService("UserInputService")
-        local Players = game:GetService("Players")
-        local lp = Players.LocalPlayer
-        local char = lp.Character or lp.CharacterAdded:Wait()
-        local playerGui = lp:WaitForChild("PlayerGui")
-
-        -- [ AYARLAR ]
-        local DASH_KEY = Enum.KeyCode.Q
-
-        -- [ GUI OLUŞTURMA ]
-        local screenGui = Instance.new("ScreenGui")
-        screenGui.Name = "StableDashGui"
-        screenGui.ResetOnSpawn = false
-        screenGui.DisplayOrder = 999
-        screenGui.Parent = playerGui
-
-        local dashBtn = Instance.new("TextButton")
-        dashBtn.Name = "DashButton"
-        dashBtn.Size = UDim2.new(0, 80, 0, 80)
-        dashBtn.Position = UDim2.new(0.85, 0, 0.7, 0)
-        dashBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        dashBtn.BackgroundTransparency = 0.3
-        dashBtn.Text = "DASH"
-        dashBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        dashBtn.Font = Enum.Font.GothamBold
-        dashBtn.TextSize = 20
-        dashBtn.AutoButtonColor = false 
-        dashBtn.Parent = screenGui
-
-        -- Görsel Ayarlar
-        local textStroke = Instance.new("UIStroke")
-        textStroke.Thickness = 2
-        textStroke.Color = Color3.fromRGB(0, 0, 0)
-        textStroke.Parent = dashBtn
-
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0.5, 0)
-        corner.Parent = dashBtn
-
-        local btnStroke = Instance.new("UIStroke")
-        btnStroke.Color = Color3.fromRGB(255, 255, 255)
-        btnStroke.Thickness = 2.5
-        btnStroke.Parent = dashBtn
-
-        -- [ SÜRÜKLENEBİLİR YAPMA ]
-        local dragging, dragInput, dragStart, startPos
-        local function update(input)
-            local delta = input.Position - dragStart
-            dashBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-
-        dashBtn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = input.Position
-                startPos = dashBtn.Position
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then dragging = false end
-                end)
-            end
-        end)
-
-        dashBtn.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                dragInput = input
-            end
-        end)
-
-        UserInputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then update(input) end
-        end)
-
-        -- [ FIX: PC MODUNA GEÇMEDEN DASH ATMA ]
-        dashBtn.Activated:Connect(function()
-            -- Görsel Geri Bildirim
-            dashBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            dashBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-            
-            -- KLAVYE SİNYALİ YERİNE SİSTEME SİNYAL GÖNDERİYORUZ
-            -- Çoğu dash scripti bu sinyali 'Processed' olmadan yakalar
-            local UIS = game:GetService("UserInputService")
-            
-            -- 1. Yöntem: GameProcessedEvent'i false geçerek manuel tetikleme
-            -- Bu yöntem Roblox'u PC moduna sokmaz
-            task.spawn(function()
-                for _, connection in pairs(getconnections(UIS.InputBegan)) do
-                    connection:Fire({KeyCode = DASH_KEY, UserInputState = Enum.UserInputState.Begin}, false)
-                end
-            end)
-
-            task.wait(0.1)
-            dashBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            dashBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        end)
-
-        -- Joystick ve butonları korumak için zorla Mobil modda tut
+    while task.wait(0.1) do
+        -- Roblox'un PC moduna geçme isteğini her 0.1 saniyede bir reddediyoruz
         UserInputService.ModalEnabled = true 
-    ]]
-    loadstring(source)()
+        -- Mobil butonların (Jump vb.) görünürlüğünü zorla açık tutuyoruz
+        local touchGui = playerGui:FindFirstChild("TouchGui")
+        if touchGui then
+            touchGui.Enabled = true
+        end
+    end
 end)
+
+-- [ GUI OLUŞTURMA ]
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ImmortalDashGui"
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 1000 -- En üst katman
+screenGui.Parent = playerGui
+
+local dashBtn = Instance.new("TextButton")
+dashBtn.Name = "DashButton"
+dashBtn.Size = UDim2.new(0, 80, 0, 80)
+dashBtn.Position = UDim2.new(0.85, 0, 0.7, 0)
+dashBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+dashBtn.BackgroundTransparency = 0.3
+dashBtn.Text = "DASH"
+dashBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+dashBtn.Font = Enum.Font.GothamBold
+dashBtn.TextSize = 20
+dashBtn.AutoButtonColor = false 
+dashBtn.Parent = screenGui
+
+-- Görsel Detaylar (Yazı Konturu ve Yuvarlatma)
+local textStroke = Instance.new("UIStroke")
+textStroke.Thickness = 2
+textStroke.Color = Color3.fromRGB(0, 0, 0)
+textStroke.Parent = dashBtn
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0.5, 0)
+corner.Parent = dashBtn
+
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = Color3.fromRGB(255, 255, 255)
+btnStroke.Thickness = 2.5
+btnStroke.Parent = dashBtn
+
+-- [ 🖱️ SÜRÜKLENEBİLİR YAPMA ]
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    dashBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+dashBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = dashBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+
+dashBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then update(input) end
+end)
+
+-- [ ⚡ DASH TETİKLEME ]
+dashBtn.Activated:Connect(function()
+    dashBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    dashBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    
+    -- Dash atarken joystick'in kaybolmaması için "Touch" modunu simüle ediyoruz
+    VirtualInputManager:SendKeyEvent(true, DASH_KEY, false, game)
+    task.wait(0.01)
+    VirtualInputManager:SendKeyEvent(false, DASH_KEY, false, game)
+    
+    task.wait(0.1)
+    dashBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    dashBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+end)
+
+print("Kilitli Mobil Dash Sistemi Aktif!")
