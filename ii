@@ -1,0 +1,105 @@
+local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- [ AYARLAR ]
+local DASH_KEY = Enum.KeyCode.Q
+
+-- [ GUI OLUŞTURMA ]
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FinalDashGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local dashBtn = Instance.new("TextButton")
+dashBtn.Name = "DashButton"
+dashBtn.Size = UDim2.new(0, 80, 0, 80)
+dashBtn.Position = UDim2.new(0.85, 0, 0.7, 0)
+dashBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Koyu arka plan
+dashBtn.BackgroundTransparency = 0.3
+dashBtn.Text = "DASH"
+dashBtn.TextColor3 = Color3.fromRGB(255, 255, 255) -- Beyaz yazı
+dashBtn.Font = Enum.Font.GothamBold -- En okunaklı font
+dashBtn.TextSize = 20
+dashBtn.AutoButtonColor = false 
+dashBtn.Parent = screenGui
+
+-- Yazı Okunabilirliği İçin Kontur (Stroke)
+local textStroke = Instance.new("UIStroke")
+textStroke.Thickness = 2
+textStroke.Color = Color3.fromRGB(0, 0, 0) -- Yazı etrafına siyah hat
+textStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual
+textStroke.Parent = dashBtn
+
+-- Yuvarlatma
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0.5, 0)
+corner.Parent = dashBtn
+
+-- Dış Kenarlık
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = Color3.fromRGB(255, 255, 255) -- Dış hat beyaz
+btnStroke.Thickness = 2.5
+btnStroke.Parent = dashBtn
+
+-- [ SÜRÜKLENEBİLİR YAPMA MANTIĞI ]
+local dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    dashBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+dashBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = dashBtn.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+
+dashBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then update(input) end
+end)
+
+-- [ TIKLAMA VE HOVER EFEKTLERİ ]
+dashBtn.MouseEnter:Connect(function()
+    dashBtn.BackgroundTransparency = 0.1
+    dashBtn:TweenSize(UDim2.new(0, 85, 0, 85), "Out", "Quad", 0.1, true)
+end)
+
+dashBtn.MouseLeave:Connect(function()
+    dashBtn.BackgroundTransparency = 0.3
+    dashBtn:TweenSize(UDim2.new(0, 80, 0, 80), "Out", "Quad", 0.1, true)
+end)
+
+-- [ Q TUŞUNU TETİKLEME ]
+dashBtn.Activated:Connect(function()
+    -- Basılma efekti
+    dashBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    dashBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+    textStroke.Enabled = false -- Basıldığında konturu kapat ki yazı temiz görünsün
+    
+    VirtualInputManager:SendKeyEvent(true, DASH_KEY, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, DASH_KEY, false, game)
+    
+    task.wait(0.05)
+    dashBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    dashBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textStroke.Enabled = true
+end)
+
+print("Okunaklı ve Sürüklenebilir Dash Sistemi Aktif!")
